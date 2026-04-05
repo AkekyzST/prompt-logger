@@ -56,6 +56,24 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
 
+  // Finish a deferred /join/:code redemption once the user has authenticated.
+  // The cookie is written by (viewer)/join/[code]/+page.server.ts and cleared
+  // here exactly once, regardless of whether the redemption succeeds.
+  const pendingCode = event.cookies.get('pl_pending_code');
+  if (pendingCode && event.locals.user) {
+    event.cookies.delete('pl_pending_code', { path: '/' });
+    try {
+      await apiJson<unknown>({ request: event.request, fetch: event.fetch }, '/api/join', {
+        method: 'POST',
+        body: JSON.stringify({ code: pendingCode }),
+      });
+    } catch (err) {
+      if (dev && isApiError(err)) {
+        console.warn('[hooks.server] deferred /api/join failed:', err.status, err.message);
+      }
+    }
+  }
+
   const htmlClass = theme === 'dark' ? 'dark' : '';
 
   return resolve(event, {
