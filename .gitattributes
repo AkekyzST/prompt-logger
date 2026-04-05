@@ -1,0 +1,18 @@
+# Enforce LF line endings for text files in the repository.
+# Working tree may still use CRLF on Windows depending on core.autocrlf.
+* text=auto eol=lf
+
+# Always LF — breaking these on checkout would break execution.
+*.sh      text eol=lf
+*.bash    text eol=lf
+Dockerfile text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+
+# Binary
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.db      binary

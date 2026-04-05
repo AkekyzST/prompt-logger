@@ -1,0 +1,25 @@
+{
+  "name": "prompt-logger",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Self-hosted real-time web app for capturing and sharing Claude Code prompts.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm --filter \"./apps/*\" build",
+    "start": "pnpm --filter @prompt-logger/server start",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm --filter \"./apps/*\" typecheck",
+    "test": "pnpm --filter \"./apps/*\" test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "typescript": "^5.6.0"
+  }
+}

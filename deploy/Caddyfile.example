@@ -1,0 +1,45 @@
+# Caddyfile for Prompt Logger
+# Replace `prompts.example.com` with your own domain.
+# Caddy will obtain and renew a TLS certificate automatically via Let's Encrypt.
+
+prompts.example.com {
+	encode zstd gzip
+
+	# --- Security headers -----------------------------------------------------
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options    "nosniff"
+		X-Frame-Options           "DENY"
+		Referrer-Policy           "strict-origin-when-cross-origin"
+		Permissions-Policy        "geolocation=(), camera=(), microphone=(), interest-cohort=()"
+		Content-Security-Policy   "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		-Server
+	}
+
+	# --- Rate limit on ingest --------------------------------------------------
+	# Requires the caddy-ratelimit module. If you run vanilla Caddy, remove this
+	# block — the app also rate-limits internally.
+	# @ingest path /api/ingest
+	# rate_limit @ingest {
+	# 	zone ingest_per_ip {
+	# 		key    {remote_host}
+	# 		events 60
+	# 		window 1m
+	# 	}
+	# }
+
+	# --- Reverse proxy to app --------------------------------------------------
+	reverse_proxy app:3000 {
+		# Critical for Server-Sent Events — disables response buffering.
+		flush_interval -1
+
+		header_up X-Real-IP        {remote_host}
+		header_up X-Forwarded-For  {remote_host}
+		header_up X-Forwarded-Host {host}
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
