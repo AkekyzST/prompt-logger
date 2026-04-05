@@ -7,6 +7,9 @@ import { logger } from './lib/logger.js';
 import { sessionMiddleware } from './middleware/session.js';
 import { authRoutes } from './routes/auth.js';
 import { ingestRoutes } from './routes/ingest.js';
+import { joinRoutes } from './routes/join.js';
+import { meRoutes } from './routes/me.js';
+import { sessionRoutes } from './routes/sessions.js';
 
 const VERSION = process.env.GIT_SHA ?? 'dev';
 
@@ -26,6 +29,9 @@ app.use('*', sessionMiddleware);
 
 app.route('/', authRoutes);
 app.route('/api', ingestRoutes);
+app.route('/api', meRoutes);
+app.route('/api', sessionRoutes);
+app.route('/api', joinRoutes);
 
 app.get('/healthz', (c) => {
   let dbStatus: 'ok' | 'error' = 'ok';
