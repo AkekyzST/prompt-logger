@@ -9,5 +9,6 @@ export default defineConfig({
     restoreMocks: true,
     reporters: 'default',
     passWithNoTests: true,
+    setupFiles: ['./test/setup-env.ts'],
   },
 });
