@@ -1,0 +1,23 @@
+# Exclude host-installed dependencies + build outputs from the Docker build
+# context. pnpm creates Windows junctions and symlinks inside `node_modules`
+# that do not resolve correctly on Linux, and letting `COPY . .` clobber the
+# clean install performed in the `deps` stage produces runtime errors like
+# `Cannot find module '/app/apps/*/node_modules/typescript/bin/tsc'`.
+node_modules
+**/node_modules
+
+# Build outputs — the image rebuilds these from source.
+apps/server/dist
+apps/web/build
+apps/web/.svelte-kit
+
+# Test + tooling state nobody needs inside the image.
+**/test-results
+**/playwright-report
+**/.playwright
+.omc
+.git
+.vscode
+.idea
+coverage
+*.log

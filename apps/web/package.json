@@ -10,7 +10,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
+    "check:no-html": "node scripts/check-no-html.mjs",
+    "verify": "pnpm check:no-html && pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "bits-ui": "^0.22.0",
@@ -22,12 +26,15 @@
     "virtua": "^0.41.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.49.0",
     "@sveltejs/adapter-node": "^5.2.0",
     "@sveltejs/kit": "^2.8.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/svelte": "^5.2.4",
+    "axe-core": "^4.10.0",
     "jsdom": "^25.0.1",
     "svelte": "^5.1.0",
     "svelte-check": "^4.0.0",

@@ -54,10 +54,12 @@ const PLACEHOLDER_HTML = `<!doctype html>
 function candidateHandlerPaths(): string[] {
   const here = dirname(fileURLToPath(import.meta.url));
   const override = process.env.PROMPT_LOGGER_WEB_HANDLER;
-  const paths: string[] = [];
-  if (override && override.length > 0) paths.push(resolve(override));
-  paths.push(resolve(here, '../../web/build/handler.js'), resolve(here, '../web/handler.js'));
-  return paths;
+  // When an override is provided we use it EXCLUSIVELY. This keeps tests
+  // deterministic: pointing `PROMPT_LOGGER_WEB_HANDLER` at a non-existent path
+  // must reliably exercise the "missing" branch even when a real
+  // `apps/web/build/handler.js` is present on disk.
+  if (override && override.length > 0) return [resolve(override)];
+  return [resolve(here, '../../web/build/handler.js'), resolve(here, '../web/handler.js')];
 }
 
 type ResolvedState = { kind: 'ok'; handler: NodeHandler; path: string } | { kind: 'missing' };

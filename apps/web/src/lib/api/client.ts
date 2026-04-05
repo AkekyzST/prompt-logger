@@ -13,6 +13,102 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { ApiError } from './errors.js';
 
 /**
+ * Test-only canned responder. Activates ONLY when the dev server is running
+ * AND `VITE_TEST_AUTH_BYPASS=1` is in the env. Every server-side `apiFetch`
+ * call short-circuits to a deterministic empty JSON payload so Playwright
+ * specs can mount admin and viewer pages without a real backend.
+ *
+ * Production builds short-circuit on `dev === false` at the top of the
+ * function, so this path can never ship.
+ */
+function testBypassResponse(path: string): Response | null {
+  const bypass =
+    dev && typeof import.meta.env !== 'undefined' && import.meta.env.VITE_TEST_AUTH_BYPASS === '1';
+  if (!bypass) return null;
+
+  const u = new URL(path, 'http://localhost');
+  const p = u.pathname;
+
+  const json = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    });
+
+  if (p === '/api/me') {
+    return json({
+      id: 'test-admin',
+      email: 'test-admin@example.com',
+      displayName: 'Test Admin',
+      role: 'admin',
+      accessibleSessionCount: 0,
+      accessibleTagCount: 0,
+    });
+  }
+
+  if (p.startsWith('/api/admin/sessions')) {
+    // Could be the list endpoint or a detail endpoint.
+    if (/\/api\/admin\/sessions\/[^/]+$/.test(p)) {
+      return json({
+        session: {
+          id: 'stub',
+          title: 'Stub session',
+          tag: null,
+          visibility: 'private',
+          closedAt: null,
+          createdAt: new Date().toISOString(),
+          seq: 0,
+        },
+        prompts: [],
+        grants: [],
+      });
+    }
+    return json({ sessions: [], nextCursor: null });
+  }
+
+  if (p.startsWith('/api/admin/users')) return json({ users: [] });
+  if (p.startsWith('/api/admin/codes')) return json({ codes: [] });
+  if (p.startsWith('/api/admin/audit')) return json({ entries: [], nextCursor: null });
+
+  if (p.startsWith('/api/sessions/')) {
+    // Generate a deterministic 50-prompt session so the viewer page SSRs a
+    // complete list for the hero e2e spec.
+    const prompts = Array.from({ length: 50 }, (_, i) => ({
+      id: `p-${i + 1}`,
+      sessionId: 'stub',
+      seq: i + 1,
+      role: 'user',
+      content: `Prompt number ${i + 1}`,
+      rawHash: null,
+      redactions: null,
+      createdAt: new Date(Date.UTC(2026, 0, 1, 12, 0, i)).toISOString(),
+    }));
+    return json({
+      session: {
+        id: 'stub',
+        title: 'Stub session',
+        tag: 'cs101',
+        visibility: 'shared',
+        closedAt: null,
+        createdAt: new Date().toISOString(),
+        seq: 50,
+      },
+      prompts,
+    });
+  }
+
+  if (p.startsWith('/api/stream/')) {
+    return new Response('retry: 10000\n\n', {
+      status: 200,
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  }
+
+  // Fallback — empty object, 200, so loaders don't blow up on unknown paths.
+  return json({});
+}
+
+/**
  * Resolve the API origin. Relative in prod (same-origin), configurable in dev.
  */
 function apiOrigin(): string {
@@ -52,6 +148,9 @@ export async function apiFetch(
   path: string,
   init: RequestInit = {}
 ): Promise<Response> {
+  const bypass = testBypassResponse(path);
+  if (bypass) return bypass;
+
   const headers = new Headers(init.headers ?? {});
   const incomingCookie = event.request.headers.get('cookie');
   if (incomingCookie && !headers.has('cookie')) {

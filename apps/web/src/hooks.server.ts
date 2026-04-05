@@ -30,6 +30,27 @@ export const handle: Handle = async ({ event, resolve }) => {
   event.locals.theme = theme;
   event.locals.user = null;
 
+  // Test-only auth bypass. Activates ONLY when the dev server is running AND
+  // `VITE_TEST_AUTH_BYPASS=1` is explicitly set in the env. Both conditions
+  // must hold, so a production build (where `dev === false`) can never
+  // short-circuit auth even if the env var leaks in.
+  const bypassEnabled =
+    dev && typeof import.meta.env !== 'undefined' && import.meta.env.VITE_TEST_AUTH_BYPASS === '1';
+  if (bypassEnabled) {
+    event.locals.user = {
+      id: 'test-admin',
+      email: 'test-admin@example.com',
+      displayName: 'Test Admin',
+      role: 'admin',
+      accessibleSessionCount: 0,
+      accessibleTagCount: 0,
+    };
+    return resolve(event, {
+      transformPageChunk: ({ html }) =>
+        html.replace('%sveltekit.theme%', theme === 'dark' ? 'dark' : ''),
+    });
+  }
+
   const sessionCookie = event.cookies.get('pl_sess');
   if (sessionCookie) {
     try {

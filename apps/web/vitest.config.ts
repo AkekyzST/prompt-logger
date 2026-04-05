@@ -13,5 +13,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,ts}'],
+    // Playwright specs live under `tests/e2e` and are run via `pnpm test:e2e`.
+    exclude: ['node_modules/**', 'tests/e2e/**', 'build/**', '.svelte-kit/**'],
   },
 });
