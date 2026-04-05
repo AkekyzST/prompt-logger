@@ -4,6 +4,7 @@ import { config } from './lib/config.js';
 import { rawDb } from './lib/db/client.js';
 import { runMigrations } from './lib/db/migrate.js';
 import { logger } from './lib/logger.js';
+import { ingestRoutes } from './routes/ingest.js';
 
 const VERSION = process.env.GIT_SHA ?? 'dev';
 
@@ -16,6 +17,8 @@ try {
 }
 
 const app = new Hono();
+
+app.route('/api', ingestRoutes);
 
 app.get('/healthz', (c) => {
   let dbStatus: 'ok' | 'error' = 'ok';
