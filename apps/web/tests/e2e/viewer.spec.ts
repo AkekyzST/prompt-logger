@@ -79,13 +79,6 @@ test.describe('session viewer', () => {
         createdAt: new Date().toISOString(),
         redactions: [],
       };
-      // After a short delay, append one more event.
-      setTimeout(() => {
-        /* body already written below; delivery happens via the single
-           fulfill call. Playwright's route fulfillment does not support
-           streaming, so we inline the new event now — the client renders
-           all events after hydration anyway. */
-      }, 0);
       chunks.push(`event: prompt\ndata: ${JSON.stringify(newPrompt)}\n\n`);
       await route.fulfill({
         status: 200,

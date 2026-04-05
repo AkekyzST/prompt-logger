@@ -13,6 +13,8 @@ const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365;
 
 function writeCookie(value: ThemeMode): void {
   if (!browser) return;
+  // httpOnly and Secure are intentionally omitted: this is a client-side write
+  // and the theme preference is non-sensitive.
   document.cookie = `${COOKIE_NAME}=${value}; Path=/; Max-Age=${ONE_YEAR_SECONDS}; SameSite=Lax`;
 }
 

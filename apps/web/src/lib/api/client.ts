@@ -97,6 +97,8 @@ function testBypassResponse(path: string): Response | null {
     });
   }
 
+  // SSE stub: returns only a retry directive. Live-update assertions must use
+  // page.route() in the Playwright spec — this canned response does not stream.
   if (p.startsWith('/api/stream/')) {
     return new Response('retry: 10000\n\n', {
       status: 200,
