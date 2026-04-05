@@ -4,6 +4,8 @@ import { config } from './lib/config.js';
 import { rawDb } from './lib/db/client.js';
 import { runMigrations } from './lib/db/migrate.js';
 import { logger } from './lib/logger.js';
+import { sessionMiddleware } from './middleware/session.js';
+import { authRoutes } from './routes/auth.js';
 import { ingestRoutes } from './routes/ingest.js';
 
 const VERSION = process.env.GIT_SHA ?? 'dev';
@@ -18,6 +20,11 @@ try {
 
 const app = new Hono();
 
+// Populate c.get('user') from the session cookie on every request. Does not
+// reject; route-level guards are responsible for 401/403.
+app.use('*', sessionMiddleware);
+
+app.route('/', authRoutes);
 app.route('/api', ingestRoutes);
 
 app.get('/healthz', (c) => {
