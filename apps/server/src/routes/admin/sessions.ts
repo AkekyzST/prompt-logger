@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
 import { and, asc, desc, eq, lt, sql } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { writeAuditLog } from '../../lib/audit.js';
 import { db } from '../../lib/db/client.js';
-import { prompts, sessionGrants, sessions, users } from '../../schema/index.js';
 import type { AuthVariables } from '../../middleware/session.js';
+import { prompts, sessionGrants, sessions, users } from '../../schema/index.js';
 
 /**
  * Admin-only session management. Every write calls writeAuditLog with the

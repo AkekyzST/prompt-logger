@@ -1,9 +1,9 @@
-import { Hono } from 'hono';
 import { asc, eq } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { db } from '../lib/db/client.js';
-import { prompts, sessions } from '../schema/index.js';
 import { canViewSession, requireAuth } from '../middleware/access.js';
 import type { AuthVariables } from '../middleware/session.js';
+import { prompts, sessions } from '../schema/index.js';
 
 /**
  * GET /api/sessions/:id — return a session + its prompts if the caller

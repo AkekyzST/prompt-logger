@@ -1,7 +1,7 @@
-import type { Context, MiddlewareHandler } from 'hono';
 import { sql } from 'drizzle-orm';
-import { db } from '../lib/db/client.js';
+import type { Context, MiddlewareHandler } from 'hono';
 import type { SessionUser } from '../lib/auth/sessions.js';
+import { db } from '../lib/db/client.js';
 import type { AuthVariables } from './session.js';
 
 /**
@@ -29,8 +29,7 @@ export function canViewSession(
   sessionId: string
 ): boolean {
   const nowIso = new Date().toISOString();
-  const row = db
-    .get<{ ok: number }>(sql`
+  const row = db.get<{ ok: number }>(sql`
       SELECT 1 AS ok FROM sessions s WHERE s.id = ${sessionId} AND (
         ${userRole} = 'admin'
         OR (s.visibility = 'shared' AND EXISTS (

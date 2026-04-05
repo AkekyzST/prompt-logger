@@ -161,7 +161,10 @@ describe('admin routes — authorization', () => {
 });
 
 describe('admin sessions — writes are audited', () => {
-  async function insertFixtureSession(sessionId: string, visibility: 'private' | 'shared' | 'code') {
+  async function insertFixtureSession(
+    sessionId: string,
+    visibility: 'private' | 'shared' | 'code'
+  ) {
     const now = new Date().toISOString();
     db.insert(sessions)
       .values({
@@ -399,4 +402,3 @@ describe('GET /api/admin/audit', () => {
     expect(body.entries[0]?.action).toEqual('code.create');
   });
 });
-

@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { db } from '../lib/db/client.js';
-import { classCodes, codeRedemptions } from '../schema/index.js';
 import { requireAuth } from '../middleware/access.js';
 import type { AuthVariables } from '../middleware/session.js';
+import { classCodes, codeRedemptions } from '../schema/index.js';
 
 /**
  * POST /api/join — redeem a class code. Idempotent: re-redeeming an

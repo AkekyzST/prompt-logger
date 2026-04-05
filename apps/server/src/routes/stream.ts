@@ -40,6 +40,30 @@ export function __getActiveConnectionsForTests(): number {
   return activeConnections;
 }
 
+/**
+ * Registry of live SSE shutdown callbacks. Each active stream registers a
+ * function that writes a final `event: close` frame and resolves the
+ * handler's park promise. The server graceful-shutdown path iterates the
+ * registry to give every connected client a clean disconnect before the
+ * HTTP server is closed.
+ */
+const shutdownCallbacks = new Set<() => void>();
+
+export async function closeAllStreams(): Promise<void> {
+  const callbacks = [...shutdownCallbacks];
+  shutdownCallbacks.clear();
+  for (const cb of callbacks) {
+    try {
+      cb();
+    } catch {
+      /* ignore — handler will still tear down via its own abort/finally path */
+    }
+  }
+  // Give the handlers a microtask tick to flush their final frame and run
+  // their finally blocks before the HTTP server closes their sockets.
+  await new Promise((resolvePromise) => setImmediate(resolvePromise));
+}
+
 const SNAPSHOT_LIMIT = 50;
 
 type SnapshotPrompt = {
@@ -160,16 +184,43 @@ streamRoutes.get('/stream/:sessionId', (c) => {
       }, config.SSE_HEARTBEAT_SECONDS * 1000);
       heartbeatTimer.unref?.();
 
-      // Park the handler until the client disconnects. Hono's stream helper
-      // keeps the response open for as long as this promise is unresolved.
+      // Park the handler until the client disconnects OR the server begins a
+      // graceful shutdown. Hono's stream helper keeps the response open for
+      // as long as this promise is unresolved.
       await new Promise<void>((resolvePromise) => {
-        const done = (): void => resolvePromise();
+        let resolved = false;
+        const done = (): void => {
+          if (resolved) return;
+          resolved = true;
+          resolvePromise();
+        };
+        const shutdownCb = (): void => {
+          // Final `close` frame so the browser EventSource doesn't
+          // auto-reconnect during an intentional shutdown.
+          stream.writeSSE({ event: 'close', data: '' }).catch(() => {
+            /* socket may already be half-closed */
+          });
+          done();
+        };
+        shutdownCallbacks.add(shutdownCb);
+
         if (abortSignal.aborted) {
+          shutdownCallbacks.delete(shutdownCb);
           done();
           return;
         }
-        abortSignal.addEventListener('abort', done, { once: true });
-        stream.onAbort(() => done());
+        abortSignal.addEventListener(
+          'abort',
+          () => {
+            shutdownCallbacks.delete(shutdownCb);
+            done();
+          },
+          { once: true }
+        );
+        stream.onAbort(() => {
+          shutdownCallbacks.delete(shutdownCb);
+          done();
+        });
       });
     } catch (err) {
       logger.warn({ err, sessionId }, 'sse stream handler error');

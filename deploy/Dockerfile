@@ -1,10 +1,19 @@
 # syntax=docker/dockerfile:1.7
 
 # =============================================================================
-# Prompt Logger — multi-stage production image
-# Stage 1: deps      — install pnpm + fetch dependencies
-# Stage 2: build     — compile server + web (SvelteKit adapter-node)
-# Stage 3: runtime   — distroless Node, minimal surface
+# Prompt Logger — multi-stage production image (API only)
+#
+# This image builds only the @prompt-logger/server workspace. The SvelteKit
+# web UI (apps/web) is a separate plan (002) and does not have source yet;
+# until it does, the server's mount seam serves a placeholder for any
+# non-/api/* request. Once apps/web has source, re-enable the web build by
+# uncommenting the `apps/web` references below and the `cp -r apps/web/build`
+# line in the build stage.
+#
+# Stages:
+#   deps    — install pnpm + fetch dependencies
+#   build   — compile the server
+#   runtime — distroless Node, minimal surface
 # =============================================================================
 
 ARG NODE_VERSION=20.11.1
@@ -25,11 +34,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # --- Stage 2: build ----------------------------------------------------------
 FROM deps AS build
 COPY . .
-RUN pnpm build
+# Build the server workspace only. apps/web is skipped until plan 002 lands.
+RUN pnpm --filter @prompt-logger/server build
 
-# Prune to production deps only
+# Prune to production deps only for the server.
 RUN pnpm --filter @prompt-logger/server deploy --prod /prod/server
-RUN cp -r apps/web/build /prod/server/web
+
+# When apps/web builds, uncomment:
+# RUN cp -r apps/web/build /prod/server/web
 
 # --- Stage 3: runtime --------------------------------------------------------
 FROM gcr.io/distroless/nodejs20-debian12:nonroot AS runtime

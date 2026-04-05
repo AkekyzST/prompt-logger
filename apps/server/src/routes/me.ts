@@ -1,5 +1,5 @@
-import { Hono } from 'hono';
 import { sql } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { db } from '../lib/db/client.js';
 import { requireAuth } from '../middleware/access.js';
 import type { AuthVariables } from '../middleware/session.js';
@@ -23,8 +23,7 @@ meRoutes.get('/me', (c) => {
   let accessibleTagCount: number;
 
   if (user.role === 'admin') {
-    const sessCount =
-      db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM sessions`)?.n ?? 0;
+    const sessCount = db.get<{ n: number }>(sql`SELECT COUNT(*) AS n FROM sessions`)?.n ?? 0;
     const tagCount =
       db.get<{ n: number }>(
         sql`SELECT COUNT(DISTINCT tag) AS n FROM sessions WHERE tag IS NOT NULL`

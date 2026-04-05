@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
 import { desc, eq, lt } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { writeAuditLog } from '../../lib/audit.js';
 import { db } from '../../lib/db/client.js';
-import { classCodes } from '../../schema/index.js';
 import type { AuthVariables } from '../../middleware/session.js';
+import { classCodes } from '../../schema/index.js';
 
 /**
  * Admin-only class-code CRUD. Every write audited.
@@ -14,10 +14,7 @@ export const adminCodeRoutes = new Hono<{ Variables: AuthVariables }>();
 
 adminCodeRoutes.get('/codes', (c) => {
   const cursor = c.req.query('cursor')?.trim();
-  const limit = Math.min(
-    Math.max(Number.parseInt(c.req.query('limit') ?? '', 10) || 50, 1),
-    200
-  );
+  const limit = Math.min(Math.max(Number.parseInt(c.req.query('limit') ?? '', 10) || 50, 1), 200);
   const list = db
     .select()
     .from(classCodes)

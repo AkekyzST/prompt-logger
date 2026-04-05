@@ -1,10 +1,10 @@
-import { Hono } from 'hono';
 import { desc, eq, lt } from 'drizzle-orm';
+import { Hono } from 'hono';
 import { z } from 'zod';
 import { writeAuditLog } from '../../lib/audit.js';
 import { db } from '../../lib/db/client.js';
-import { users } from '../../schema/index.js';
 import type { AuthVariables } from '../../middleware/session.js';
+import { users } from '../../schema/index.js';
 
 /**
  * Admin-only user management. POST creates a stub user row (by email) so
@@ -18,10 +18,7 @@ export const adminUserRoutes = new Hono<{ Variables: AuthVariables }>();
 
 adminUserRoutes.get('/users', (c) => {
   const cursor = c.req.query('cursor')?.trim();
-  const limit = Math.min(
-    Math.max(Number.parseInt(c.req.query('limit') ?? '', 10) || 50, 1),
-    200
-  );
+  const limit = Math.min(Math.max(Number.parseInt(c.req.query('limit') ?? '', 10) || 50, 1), 200);
   const list = db
     .select()
     .from(users)
