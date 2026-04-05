@@ -103,6 +103,25 @@ export const authSessions = sqliteTable('auth_sessions', {
   ip: text('ip'),
 });
 
+export const auditLog = sqliteTable(
+  'audit_log',
+  {
+    id: text('id').primaryKey(), // ULID
+    actorId: text('actor_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+    action: text('action').notNull(),
+    targetType: text('target_type').notNull(),
+    targetId: text('target_id'),
+    metadata: text('metadata'), // JSON string
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({
+    byCreatedAt: index('idx_audit_log_created_at').on(t.createdAt),
+    byActor: index('idx_audit_log_actor_id').on(t.actorId),
+  })
+);
+
 // Re-export sql helper for callers that need raw expressions next to the
 // schema (e.g. migration scripts).
 export { sql };

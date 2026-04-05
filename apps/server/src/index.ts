@@ -4,7 +4,13 @@ import { config } from './lib/config.js';
 import { rawDb } from './lib/db/client.js';
 import { runMigrations } from './lib/db/migrate.js';
 import { logger } from './lib/logger.js';
+import { requireAuth } from './middleware/access.js';
+import { requireAdmin } from './middleware/requireAdmin.js';
 import { sessionMiddleware } from './middleware/session.js';
+import { adminAuditRoutes } from './routes/admin/audit.js';
+import { adminCodeRoutes } from './routes/admin/codes.js';
+import { adminSessionRoutes } from './routes/admin/sessions.js';
+import { adminUserRoutes } from './routes/admin/users.js';
 import { authRoutes } from './routes/auth.js';
 import { ingestRoutes } from './routes/ingest.js';
 import { joinRoutes } from './routes/join.js';
@@ -32,6 +38,13 @@ app.route('/api', ingestRoutes);
 app.route('/api', meRoutes);
 app.route('/api', sessionRoutes);
 app.route('/api', joinRoutes);
+
+// Admin routes: every write is audited in lib/audit.ts via writeAuditLog().
+app.use('/api/admin/*', requireAuth, requireAdmin);
+app.route('/api/admin', adminSessionRoutes);
+app.route('/api/admin', adminUserRoutes);
+app.route('/api/admin', adminCodeRoutes);
+app.route('/api/admin', adminAuditRoutes);
 
 app.get('/healthz', (c) => {
   let dbStatus: 'ok' | 'error' = 'ok';
